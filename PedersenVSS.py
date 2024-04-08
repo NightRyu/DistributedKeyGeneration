@@ -53,10 +53,10 @@ def secret_recovery(stocks):
     for stock in stocks:
         x.append(stock[0])
         y.append(stock[1])
-    # 进行拉格朗日插值
-    poly = lagrange_interpolation(x, y, p)
+    # 进行拉格朗日插值lagrange_interpolation
+    poly = lagrange_interpolation(x, y)
     # 通过计算x = 0处的值恢复秘密
-    secret = poly(0)
+    secret = poly(0, p)
     return secret
 
 

@@ -1,10 +1,11 @@
-import PedersenVSS
+from PedersenVSS import *
+from COBRA import *
 import gmpy2
 
 
 class User:
     def __init__(self, user_id, participants, threshold):
-        self.pvss = PedersenVSS.PedersenVSS(participants, threshold) # 生成要分发的分片和秘密
+        self.pvss = PedersenVSS(participants, threshold) # 生成要分发的分片和秘密
         self.participants = participants # 参与者数量
         self.threshold = threshold
         self.user_id = user_id
@@ -27,7 +28,7 @@ class User:
     def verfication(self):
         count = 1
         for stock in self.stocks:
-            stock[-1] = PedersenVSS.verification_pedersen(stock[0])
+            stock[-1] = verification_pedersen(stock[0])
             if stock[-1]: # 正确则加入QUAL中
                  self.qualified_user.append(count)
             else: # 不正确则存疑
@@ -41,7 +42,7 @@ class User:
             if user.user_id in self.complant_user:
                 stock = user.new_stock(self.user_id)
                 # 仍不符合要求则失去资格
-                if not PedersenVSS.verification_pedersen(stock):
+                if not verification_pedersen(stock):
                     self.disqualified_user.append(user.user_id)
                 else:
                     self.qualified_user.append(user.user_id)
@@ -87,7 +88,7 @@ class User:
             for stock in self.collected_stocks:
                 if stock[-1]:
                     certificated_stocks.append(stock[0])
-            return gmpy2.mod(PedersenVSS.secret_recovery(certificated_stocks), PedersenVSS.p)
+            return gmpy2.mod(secret_recovery(certificated_stocks), p)
         else:
             return "No Enough QUAL User"
 
@@ -96,9 +97,9 @@ class User:
         y = 1
         for i, stock in enumerate(self.stocks):
             if i + 1 in self.qualified_user:
-                if PedersenVSS.verfication_feldman(stock):
+                if verfication_feldman(stock):
                     y *= stock[0][4][0]
-                    y = gmpy2.mod(y, PedersenVSS.p)
+                    y = gmpy2.mod(y, p)
                 else:
                     # 恢复其秘密
                     stock_piece = []
@@ -106,6 +107,24 @@ class User:
                         # 从每个QUAL用户中获取未验证通过用户的密钥分片
                         stock_piece.append(user.stocks[stock[0] - 1])
                     # 恢复zi的值，并再次运算g^zi mod p
-                    y *= PedersenVSS.complaint_feldman(stock_piece)
-        y = gmpy2.mod(y, PedersenVSS.p)
+                    y *= complaint_feldman(stock_piece)
+        y = gmpy2.mod(y, p)
         return y
+
+
+    def recover_share(self, users):
+        rec = p_recover(self.threshold, self.user_id, self.participants)
+        b_stocks = []
+        for user in users:
+            bs = [rec.bs[user.user_id], True]
+            b_stocks.append(user.blinded_share(bs))
+        self.my_key_stock = rec.recover_share(b_stocks)
+
+    def blinded_share(self, bs):
+        if verification_pedersen(bs):
+            b_stock = self.my_key_stock
+            b_stock[1] += bs[1]
+            b_stock[2] += bs[2]
+            return b_stock
+        else:
+            return False
