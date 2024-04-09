@@ -1,3 +1,4 @@
+from copy import copy
 import user
 import gmpy2
 import PedersenVSS
@@ -37,6 +38,10 @@ if __name__ == '__main__':
     y = parties[0].extract_y()
     print(hex(y))
     print(y == gmpy2.powmod(PedersenVSS.g, x, PedersenVSS.p))
+
+    temp = copy(parties[0].my_key_stock)
+    parties[0].recover_share(parties)
+    print(temp[1] == parties[0].my_key_stock[1])
     '''
     yy = 1
     for part in parties:

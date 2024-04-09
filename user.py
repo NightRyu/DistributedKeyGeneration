@@ -73,7 +73,9 @@ class User:
         for stock in self.stocks:
             if stock[-1]:# 如果stock属于QUAL
                 self.my_key_stock[1] += stock[0][1]
+                self.my_key_stock[1] = gmpy2.mod(self.my_key_stock[1], p)
                 self.my_key_stock[2] += stock[0][2]
+                self.my_key_stock[2] = gmpy2.mod(self.my_key_stock[2], p)
 
 
     def collect_stock(self, users):
@@ -119,16 +121,20 @@ class User:
         for user in users:
             bs = [rec.bs[user.user_id], True]
             b_stocks.append(user.blinded_share(bs))
-        self.my_key_stock = rec.recover_share(b_stocks)
+        value = rec.recover_share(b_stocks)
+        stock = [self.user_id, value]
+        self.my_key_stock = stock
 
 
     def blinded_share(self, bs):
-        if verification_pedersen(bs):
-            b_stock = self.my_key_stock
-            b_stock[1] += bs[1]
-            b_stock[2] += bs[2]
-            return b_stock
-        else:
-            return False
+        # if verification_pedersen(bs):
+        b_stock = self.my_key_stock
+        b_stock[1] += bs[0][1]
+        b_stock[1] = gmpy2.mod(b_stock[1], p)
+        b_stock[2] += bs[0][2]
+        b_stock[2] = gmpy2.mod(b_stock[2], p)
+        return b_stock
+        #else:
+        #     return False
 
 

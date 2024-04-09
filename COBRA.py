@@ -10,9 +10,9 @@ class p_recover:
         self.k = k
         # 生成恢复多项式r1、r2 有r(k)=0
         self.r1 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
-        self.r1 -= gmpy2.mpz(sum(a * k ** i for i, a in enumerate(self.f1)))
+        self.r1[0] -= gmpy2.mpz(sum(a * k ** i for i, a in enumerate(self.r1)))
         self.r2 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
-        self.r2 -= gmpy2.mpz(sum(a * k ** i for i, a in enumerate(self.f1)))
+        self.r2[0] -= gmpy2.mpz(sum(a * k ** i for i, a in enumerate(self.r2)))
         # 用于盲化的份额
         self.bs = []
         p_commit = []
@@ -26,8 +26,8 @@ class p_recover:
         for i in range(num_of_participants + 1):
             # s1 = gmpy2.mod(sum(a * i ** k for k, a in enumerate(self.f1)), q)
             # s2 = gmpy2.mod(sum(b * i ** k for k, b in enumerate(self.f2)), q)
-            s1 = gmpy2.mpz(sum(a * i ** k for k, a in enumerate(self.f1)))
-            s2 = gmpy2.mpz(sum(b * i ** k for k, b in enumerate(self.f2)))
+            s1 = gmpy2.mpz(sum(a * i ** k for k, a in enumerate(self.r1)))
+            s2 = gmpy2.mpz(sum(b * i ** k for k, b in enumerate(self.r2)))
             value = [i, s1, s2, p_commit, f_commit]
             self.bs.append(value)
 
@@ -40,7 +40,7 @@ class p_recover:
             x.append(stock[0])
             y.append(stock[1])
         poly = lagrange_interpolation(x, y)
-        r_stock = poly(self.k)
+        r_stock = poly(self.k, p)
         return r_stock
 
 
