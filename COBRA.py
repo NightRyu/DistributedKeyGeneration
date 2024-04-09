@@ -31,7 +31,7 @@ class p_recover:
             value = [i, s1, s2, p_commit, f_commit]
             self.bs.append(value)
 
-    # 使用盲化后份额(P + R)恢复出的多项式是(P + R)()这样(P+R)(k)的值为原多项式的份额
+    # 使用盲化后份额(P + R)恢复出的多项式是(P + R)()这样(P+R)(k)的值为恢复出的份额，且不会暴露原多项式的值
     # TODO:对获取的stocks的验证
     def recover_share(self, stocks):
         x = []
@@ -45,19 +45,39 @@ class p_recover:
 
 
 
-'''
-class rebuild:
-    def __init__(self, old_users, new_users):
+class reshare:
+    def __init__(self, old_users, new_users, threshold):
         self.old_users = old_users
-        # 收集份额恢复原多项式Q
-        stocks = []
-        for user in old_users:
-            stocks.append(user.my_key_stock)
-        self.old_q = recover_poly(stocks)
+        # 生成随机多项式Q、Q'，用于盲化份额，进行秘密传递
+        # 两个多项式用于Pederesen VSS承诺及验证
+        self.old_q1 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
+        self.old_q2 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
         self.new_users = new_users
-'''
+        self.new_q1 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
+        self.new_q2 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
+        # 二者常数项相等
+        self.new_q1[0] = self.old_q1[0]
+        self.new_q2[0] = self.old_q2[0]
+        self.bs = []
 
 
-def reshare(old_user, new_user):
+    def get_blind_stock(self):
+        blinder = []
+        for o_user in self.old_users:
+            stock = []
+            stock.append(o_user.user_id)
+            # 计算Q(k)的值
+            v1 = gmpy2.mpz(sum(a * o_user.user_id ** k for k, a in enumerate(self.old_q1)))
+            v1 += o_user.my_key_stock[1]
+            stock.append(v1)
+            v2 = gmpy2.mpz(sum(a * o_user.user_id ** k for k, a in enumerate(self.old_q2)))
+            v2 += o_user.my_key_stock[2]
+            blinder.append(stock)
+        return blinder
 
-    return
+
+    def share_new(self, blinder):
+        for n_user, bs in self.new_users, blinder:
+            n_user.user_id = bs[0]
+            v = gmpy2.mpz(sum(a * n_user.user_id ** k for k, a in enumerate(self.new_q1)))
+            n_user.my_key_stock = [n_user.user_id, bs[1] - v]

@@ -73,6 +73,7 @@ class User:
         for stock in self.stocks:
             if stock[-1]:# 如果stock属于QUAL
                 self.my_key_stock[1] += stock[0][1]
+                self.my_key_stock[2] += stock[0][2]
 
 
     def collect_stock(self, users):
@@ -92,7 +93,7 @@ class User:
         else:
             return "No Enough QUAL User"
 
-
+    # TODO:重写恢复秘密，改用COBRA
     def extract_y(self):
         y = 1
         for i, stock in enumerate(self.stocks):
@@ -120,6 +121,7 @@ class User:
             b_stocks.append(user.blinded_share(bs))
         self.my_key_stock = rec.recover_share(b_stocks)
 
+
     def blinded_share(self, bs):
         if verification_pedersen(bs):
             b_stock = self.my_key_stock
@@ -128,3 +130,5 @@ class User:
             return b_stock
         else:
             return False
+
+
