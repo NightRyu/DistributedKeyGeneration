@@ -41,7 +41,9 @@ if __name__ == '__main__':
 
     temp = copy(parties[0].my_key_stock)
     parties[0].recover_share(parties)
-    print(temp[1] == parties[0].my_key_stock[1])
+    print(temp)
+    print(parties[0].my_key_stock)
+    print(temp == parties[0].my_key_stock)
     '''
     yy = 1
     for part in parties:

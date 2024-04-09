@@ -39,9 +39,14 @@ class p_recover:
         for stock in stocks:
             x.append(stock[0])
             y.append(stock[1])
-        poly = lagrange_interpolation(x, y)
-        r_stock = poly(self.k, p)
-        return r_stock
+        poly1 = lagrange_interpolation(x, y)
+        r_stock = poly1(self.k, p)
+        y.clear()
+        for stock in stocks:
+            y.append(stock[2])
+        poly2 = lagrange_interpolation(x, y)
+        r_commit = poly2(self.k, p)
+        return r_stock, r_commit
 
 
 

@@ -121,8 +121,8 @@ class User:
         for user in users:
             bs = [rec.bs[user.user_id], True]
             b_stocks.append(user.blinded_share(bs))
-        value = rec.recover_share(b_stocks)
-        stock = [self.user_id, value]
+        value1, value2 = rec.recover_share(b_stocks)
+        stock = [self.user_id, value1, value2]
         self.my_key_stock = stock
 
 
