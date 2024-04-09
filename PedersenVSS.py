@@ -30,12 +30,8 @@ class PedersenVSS:
             f_value = gmpy2.powmod(g, a, p)
             p_commit.append(p_value)
             f_commit.append(f_value)
-        # self.f1.reverse()
-        # self.f2.reverse()
         # 计算f1(j),f2(j)，并以[f1(j),f2(j)]的形式存储进ss f(0)是自身的秘密
         for i in range(num_of_participants + 1):
-            # s1 = gmpy2.mod(sum(a * i ** k for k, a in enumerate(self.f1)), q)
-            # s2 = gmpy2.mod(sum(b * i ** k for k, b in enumerate(self.f2)), q)
             s1 = gmpy2.mpz(sum(a * i ** k for k, a in enumerate(self.f1)))
             s2 = gmpy2.mpz(sum(b * i ** k for k, b in enumerate(self.f2)))
             value = [i, s1, s2, p_commit, f_commit]
