@@ -19,22 +19,23 @@ rp = gmpy2.random_state()
 class PedersenVSS:
     def __init__(self, num_of_participants, threshold):
         # 生成多项式
-        self.f1 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
-        self.f2 = [gmpy2.mpz_random(rp, q) for _ in range(threshold + 1)]
+        self.f1 = [gmpy2.mpz_random(rp, q) for _ in range(threshold)]
+        self.f2 = [gmpy2.mpz_random(rp, q) for _ in range(threshold)]
         self.ss = []
         # 计算承诺
-        p_commit = []
-        f_commit = []
+        self.p_commit = []
+        self.f_commit = []
         for a, b in zip(self.f1, self.f2):
             p_value = gmpy2.mod(gmpy2.mul(gmpy2.powmod(g, a, p), gmpy2.powmod(h, b, p)), p)
             f_value = gmpy2.powmod(g, a, p)
-            p_commit.append(p_value)
-            f_commit.append(f_value)
-        # 计算f1(j),f2(j)，并以[f1(j),f2(j)]的形式存储进ss f(0)是自身的秘密
+            self.p_commit.append(p_value)
+            self.f_commit.append(f_value)
+        # 计算f1(j),f2(j)，并以[f1(j),f2(j)]的形式存储进ss
+        # f(0)是自身的秘密
         for i in range(num_of_participants + 1):
             s1 = gmpy2.mpz(sum(a * i ** k for k, a in enumerate(self.f1)))
             s2 = gmpy2.mpz(sum(b * i ** k for k, b in enumerate(self.f2)))
-            value = [i, s1, s2, p_commit, f_commit]
+            value = [i, s1, s2, self.p_commit, self.f_commit]
             self.ss.append(value)
 
 
@@ -61,8 +62,9 @@ def verification_pedersen(stock):
     lhs = gmpy2.mod(gmpy2.powmod(g, s1, p) * gmpy2.powmod(h, s2, p), p)
     rhs = 1
     for k,val in enumerate(p_commit):
-        rhs *= gmpy2.powmod(val, j ** k, p)
-    rhs = gmpy2.mod(rhs, p)
+        t = j ** k
+        rhs *= gmpy2.powmod(val, t, p)
+        rhs = gmpy2.mod(rhs, p)
     return lhs == rhs
 
 

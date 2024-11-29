@@ -15,6 +15,8 @@ def lagrange_interpolation(x, y):
                     if i == j:
                         continue
                     xj, yj = x[j], y[j]
+                    if xi == xj:
+                        continue
                     # 计算每一项的值
                     tot_mul *= (x_val - xj) / (xi - xj)
                 return gmpy2.mpz(tot_mul)

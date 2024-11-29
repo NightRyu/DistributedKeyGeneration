@@ -1,6 +1,6 @@
 from PedersenVSS import *
-from COBRA import *
 import gmpy2
+import COBRA
 
 
 class User:
@@ -15,6 +15,7 @@ class User:
         self.qualified_user = [] # 合格参与者的ID
         self.complant_user = [] # 存疑参与者的ID
         self.disqualified_user = [] # 失格参与者的ID
+        self.pub_keys = [] #存储其它参与者发送的公钥
 
 
     def distribute_keys(self, users):
@@ -31,6 +32,7 @@ class User:
             stock[-1] = verification_pedersen(stock[0])
             if stock[-1]: # 正确则加入QUAL中
                  self.qualified_user.append(count)
+                 self.pub_keys.append(stock[0][4][0])
             else: # 不正确则存疑
                 self.complant_user.append(count)
             count += 1
@@ -69,14 +71,10 @@ class User:
     def get_my_stock(self):
         self.my_key_stock.append(self.user_id)
         self.my_key_stock.append(0)
-        self.my_key_stock.append(0)
         for stock in self.stocks:
             if stock[-1]:# 如果stock属于QUAL
                 self.my_key_stock[1] += stock[0][1]
                 self.my_key_stock[1] = gmpy2.mod(self.my_key_stock[1], p)
-                self.my_key_stock[2] += stock[0][2]
-                self.my_key_stock[2] = gmpy2.mod(self.my_key_stock[2], p)
-
 
     def collect_stock(self, users):
         # 收集份额
@@ -84,31 +82,31 @@ class User:
             if user.user_id in self.qualified_user:
                 self.collected_stocks.append([user.my_key_stock,True])
 
-
     def recovery_secret(self):
         if len(self.qualified_user) >= self.threshold:
             certificated_stocks = []
+            count = 0
             for stock in self.collected_stocks:
-                if stock[-1]:
+                if stock[-1] and len(certificated_stocks) < self.threshold:
                     certificated_stocks.append(stock[0])
+                else:
+                    break
             return gmpy2.mod(secret_recovery(certificated_stocks), p)
         else:
             return "No Enough QUAL User"
 
-    # TODO:重写恢复秘密，改用COBRA
-    def extract_y(self):
-        y = 1
+    def extract_y(self, users):
+        y = gmpy2.mpz(1)
         for i, stock in enumerate(self.stocks):
             if i + 1 in self.qualified_user:
                 if verfication_feldman(stock):
-                    y *= stock[0][4][0]
-                    y = gmpy2.mod(y, p)
+                    y = gmpy2.mod(gmpy2.mul(y, self.pub_keys[i]), p)
                 else:
-                    # 恢复其秘密
+                    # 若不能通过验证，则恢复其秘密并计算g^zi作为其y值
                     stock_piece = []
                     for user in self.qualified_user:
                         # 从每个QUAL用户中获取未验证通过用户的密钥分片
-                        stock_piece.append(user.stocks[stock[0] - 1])
+                        stock_piece.append(users[user].stocks[stock[0][0] - 1])
                     # 恢复zi的值，并再次运算g^zi mod p
                     y *= complaint_feldman(stock_piece)
         y = gmpy2.mod(y, p)
@@ -116,25 +114,18 @@ class User:
 
 
     def recover_share(self, users):
-        rec = p_recover(self.threshold, self.user_id, self.participants)
+        rec = COBRA.recover(self.threshold, self.user_id, self.participants)
         b_stocks = []
         for user in users:
             bs = [rec.bs[user.user_id], True]
             b_stocks.append(user.blinded_share(bs))
-        value1, value2 = rec.recover_share(b_stocks)
-        stock = [self.user_id, value1, value2]
+        value1  = rec.recover_share(b_stocks)
+        stock = [self.user_id, value1]
         self.my_key_stock = stock
 
 
     def blinded_share(self, bs):
-        # if verification_pedersen(bs):
         b_stock = self.my_key_stock
         b_stock[1] += bs[0][1]
         b_stock[1] = gmpy2.mod(b_stock[1], p)
-        b_stock[2] += bs[0][2]
-        b_stock[2] = gmpy2.mod(b_stock[2], p)
         return b_stock
-        #else:
-        #     return False
-
-
